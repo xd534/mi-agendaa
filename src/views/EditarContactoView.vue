@@ -81,7 +81,7 @@ async function handleActualizar() {
         })
         const texto = await response.text()
         console.log('respuesta cruda:', texto)
-        const data = JSON.parse.apply(texto)
+        const data = JSON.parse(texto)
 
         if (data.success) {
             exito.value = 'Contacto actualizado. Redirigiendo...'
