@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getApiUrl } from '@/config/api'
@@ -61,15 +61,24 @@ async function cerrarSesion() {
     router.push('/login')
 }
 
-const contactosFiltrados = () => {
+const contactosFiltrados = computed(() => {
+    // Si no hay contactos cargados todavía, devolvemos un array vacío seguro
+    if (!contactos.value) return [] 
+    
     if (!busqueda.value) return contactos.value
+    
     const b = busqueda.value.toLowerCase()
-    return contactos.value.filter(c =>
-        c.nombre.toLowerCase().includes(b) ||
-        (c.apellido && c.apellido.toLowerCase().includes(b)) ||
-        c.telefono.includes(b)
-    )
-}
+    
+    return contactos.value.filter(c => {
+        // Usamos el encadenamiento opcional (?.) y "?? ''" para evitar "undefined"
+        const nombre = c.nombre?.toLowerCase() ?? ''
+        const apellido = c.apellido?.toLowerCase() ?? ''
+        const telefono = c.telefono ?? '' // Asegura que sea string para usar .includes()
+
+        return nombre.includes(b) || apellido.includes(b) || telefono.includes(b)
+    })
+})
+
 
 onMounted(cargarContactos)
 </script>
@@ -97,7 +106,7 @@ onMounted(cargarContactos)
 
         <div v-else class="lista">
             <ContactoCard
-                v-for="contacto in contactosFiltrados()"
+                v-for="contacto in contactosFiltrados"
                 :key="contacto.id"
                 :contacto="contacto"
                 @eliminar="eliminarContacto"
