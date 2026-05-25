@@ -4,7 +4,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [vue()],
-  base: '/mi-agendaa/',  // ← nombre exacto de tu repositorio
+  base: '/mi-agendaa/',  // ← nombre del repositorio
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

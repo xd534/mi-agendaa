@@ -4,14 +4,14 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
-const auth = useAuthStore()
+const auth = useAuthStore()// se conecta al store para usar la funcion de login
 
 const nombre_de_usuario = ref('')
-const password = ref('')
+const password = ref('')// guardan lo que el usuario escriba
 const error = ref('')
-const cargando = ref(false)
+const cargando = ref(false) //controla que el boton se desactive mientras el servidor responde
 
-async function handleLogin() {
+async function handleLogin() {// valida que los campos no esten vacios
     error.value = ''
 
     if (!nombre_de_usuario.value || !password.value) {
@@ -19,15 +19,15 @@ async function handleLogin() {
         return
     }
 
-    cargando.value = true
+    cargando.value = true // desactiva el estado de carga para desactivar el boton
     try {
-        const data = await auth.login(nombre_de_usuario.value, password.value)
+        const data = await auth.login(nombre_de_usuario.value, password.value)// llama a la funcion de login del store y espera su respuesta
         if (data.success) {
             router.push('/agenda')
         } else {
             error.value = data.message
         }
-    } catch (e) {
+    } catch (e) {// si hay un error en la conexion con el servidor, se muestra un mensaje de error generico
         error.value = 'Error de conexión con el servidor'
     } finally {
         cargando.value = false
