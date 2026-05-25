@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getApiUrl } from '@/config/api'
@@ -63,15 +63,16 @@ async function cerrarSesion() {// llama al método de logout del store de autent
     router.push('/login')
 }
 
-const contactosFiltrados = () => {// devuelve la lista de contactos filtrada según el texto de búsqueda ingresado por el usuario
+const contactosFiltrados = computed(() => {// devuelve la lista de contactos filtrada según el texto de búsqueda ingresado por el usuario
     if (!busqueda.value) return contactos.value
+    if(!contactos.value)return []
     const b = busqueda.value.toLowerCase()
     return contactos.value.filter(c =>
         c.nombre.toLowerCase().includes(b) ||
         (c.apellido && c.apellido.toLowerCase().includes(b)) ||
         c.telefono.includes(b)
     )
-}
+})
 
 onMounted(cargarContactos)// cuando el componente se monta, se llama a la función cargarContactos para obtener la lista de contactos del backend
 </script>
@@ -93,13 +94,13 @@ onMounted(cargarContactos)// cuando el componente se monta, se llama a la funci�
 
         <div v-if="cargando" class="estado">Cargando contactos...</div>
         <div v-else-if="error" class="mensaje-error">{{ error }}</div>
-        <div v-else-if="contactosFiltrados().length === 0" class="estado">
+        <div v-else-if="contactosFiltrados.length === 0" class="estado">
             No hay contactos aún.
         </div>
 
         <div v-else class="lista">
             <ContactoCard
-                v-for="contacto in contactosFiltrados()"
+                v-for="contacto in contactosFiltrados"
                 :key="contacto.id"
                 :contacto="contacto"
                 @eliminar="eliminarContacto"

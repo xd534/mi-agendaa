@@ -5,40 +5,34 @@ import { useAuthStore } from '@/stores/auth'
 import { getApiUrl } from '@/config/api'
 
 const router = useRouter()
-const auth = useAuthStore() // Trae los datos globales del usuario logueado y su token
+const auth = useAuthStore()
 
-// VARIABLES REACTIVAS: Guardan el estado del perfil en la pantalla
 const nombre_de_usuario = ref('')
-const foto = ref(null)             // Guarda el bloque de bytes si el usuario sube una nueva imagen
-const previsualizacion = ref(null) // Guarda la ruta de la foto actual o la miniatura temporal
+const foto = ref(null)            
+const previsualizacion = ref(null)
 const fecha_registro = ref('')
 const error = ref('')
 const exito = ref('')
-const cargando = ref(false)        // Controla que el botón se desactive al guardar cambios
-const baseUrl = ref('')            // Guarda la URL base del servidor de Alwaysdata
+const cargando = ref(false)        
+const baseUrl = ref('')            
 
-// Captura la nueva imagen elegida en el input file
 function seleccionarFoto(e) {
-    const archivo = e.target.files[0] // Agarra el archivo binario crudo
+    const archivo = e.target.files[0]
     if (!archivo) return
     foto.value = archivo
-    // Crea una ruta temporal para previsualizar la foto elegida al instante
     previsualizacion.value = URL.createObjectURL(archivo)
 }
 
-// CARGAR PERFIL (READ): Trae la información del usuario logueado
 async function cargarPerfil() {
     try {
         const API_URL = await getApiUrl()
-        baseUrl.value = API_URL // Almacena la URL base para construir la ruta final de la foto en el HTML
+        baseUrl.value = API_URL
         
-        // Petición GET enviando el token en las cabeceras como autorización
         const response = await fetch(`${API_URL}/auth/perfil.php`, {
             headers: { Authorization: `Bearer ${auth.token}` }
         })
         const data = await response.json()
         
-        // Llena las variables con la información que tiene la Base de Datos
         if (data.success) {
             nombre_de_usuario.value = data.usuario.nombre_de_usuario
             previsualizacion.value = data.usuario.foto || null
@@ -51,7 +45,6 @@ async function cargarPerfil() {
     }
 }
 
-// ACTUALIZAR (UPDATE): Envía el nuevo nombre de usuario o foto a PHP 
 async function handleActualizar() {
     error.value = ''
     exito.value = ''
@@ -65,29 +58,23 @@ async function handleActualizar() {
     try {
         const API_URL = await getApiUrl()
         
-        // FORMDATA: La caja que transporta textos junto con archivos multimedia (bytes de la foto)
         const formData = new FormData()
         formData.append('nombre_de_usuario', nombre_de_usuario.value)
-        // Solo añade la foto al paquete si el usuario seleccionó una nueva para cambiarla
         if (foto.value) formData.append('foto', foto.value)
 
-        // Petición HTTP usando la caja FormData 
-        const response = await fetch(`${API_URL}auth/editar.php`, {
+        const response = await fetch(`${API_URL}/auth/editar.php`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${auth.token}` },
             body: formData
         })
         
-        // CONTROL DE ERRORES: Lee la respuesta como texto plano antes de convertirla a JSON
         const texto = await response.text()
         console.log('respuesta cruda:', texto)
         const data = JSON.parse(texto)
         
-
         if (data.success) {
             exito.value = 'Perfil actualizado correctamente'
             
-            // ACTUALIZACIÓN GLOBAL (Pinia): Actualiza los datos en la memoria del Store
             auth.guardarSesion(auth.token, {
                 ...auth.usuario,
                 nombre_de_usuario: nombre_de_usuario.value
@@ -98,15 +85,15 @@ async function handleActualizar() {
     } catch (e) {
         error.value = 'Error de conexión'
     } finally {
-        cargando.value = false // Libera el botón
+        cargando.value = false
     }
 }
-// CERRAR SESIÓN: Ejecuta el borrado del Store/LocalStorage y manda al Login
+
 async function cerrarSesion() {
     await auth.logout()
     router.push('/login')
 }
-// CICLO DE VIDA: Carga los datos del perfil de forma automática en cuanto la pantalla se monta
+
 onMounted(cargarPerfil)
 </script>
 

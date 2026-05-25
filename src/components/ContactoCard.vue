@@ -1,6 +1,6 @@
 <script setup>
 import { getApiUrl } from '@/config/api'
-import { ref, onMounted, computed } from 'vue' // <-- 1. Importamos computed aquí
+import { ref, onMounted, computed } from 'vue'
 import '@/assets/contacto-card.css'
 
 const props = defineProps({ contacto: Object })
@@ -13,27 +13,39 @@ onMounted(async () => {
     baseUrl.value = url
 })
 
-// 2. Creamos la propiedad computada inteligente fuera de onMounted
 const urlImagen = computed(() => {
-    // Si no hay foto, silueta por defecto
-    if (!props.contacto.foto) {
-        return 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+    const siluetaDefault = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+
+    // Si el contacto no existe o no tiene una propiedad foto válida, silueta
+    if (!props.contacto || !props.contacto.foto) {
+        return siluetaDefault
     }
 
-    // Si ya viene con http o https, la dejamos igual
-    if (props.contacto.foto.startsWith('http://') || props.contacto.foto.startsWith('https://')) {
-        return props.contacto.foto
+    const fotoStr = props.contacto.foto.toString().trim()
+
+    // EVALUACIÓN ULTRA-ESTRICTA: ¿Es verdaderamente el archivo por defecto?
+    if (fotoStr === '' || fotoStr === 'default.png' || fotoStr.endsWith('/default.png')) {
+        return siluetaDefault
     }
 
-    // Si solo viene "default.png" o similar, construimos la ruta bien armada
-    const servidorBase = baseUrl.value.replace('/api', '').replace(/\/+$/, '') 
-    let rutaFoto = props.contacto.foto.replace(/^\/+/, '')
+    // Si ya viene con http o https completa (por si acaso)
+    if (fotoStr.startsWith('http://') || fotoStr.startsWith('https://')) {
+        return fotoStr
+    }
+
+    // Asegurar el dominio base limpio de Alwaysdata sin importar el config.json
+    const servidorAlwaysdata = 'https://fullagenda.alwaysdata.net'
     
-    if (!rutaFoto.includes('uploads/')) {
+    // Limpiamos barras inclinadas extras al inicio
+    let rutaFoto = fotoStr.replace(/^\/+/, '')
+    
+    // Si la base de datos no guardó el prefijo 'uploads/', se lo ponemos
+    if (!rutaFoto.startsWith('uploads/')) {
         rutaFoto = `uploads/contactos/${rutaFoto}`
     }
 
-    return `${servidorBase}/${rutaFoto}` 
+    // Retornamos la ruta final absoluta hacia Alwaysdata
+    return `${servidorAlwaysdata}/${rutaFoto}` 
 })
 </script>
 
@@ -41,7 +53,7 @@ const urlImagen = computed(() => {
     <div class="card">
         <img 
             :src="urlImagen" 
-            @error="e => e.target.src = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'" 
+            @error="e => { e.target.src = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }" 
             alt="Foto de contacto"
         />
         
