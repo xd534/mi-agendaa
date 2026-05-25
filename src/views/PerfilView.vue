@@ -72,7 +72,7 @@ async function handleActualizar() {
         if (foto.value) formData.append('foto', foto.value)
 
         // Petición HTTP usando la caja FormData 
-        const response = await fetch(`${API_URL}/auth/editar.php`, {
+        const response = await fetch(`${API_URL}auth/editar.php`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${auth.token}` },
             body: formData
@@ -82,6 +82,7 @@ async function handleActualizar() {
         const texto = await response.text()
         console.log('respuesta cruda:', texto)
         const data = JSON.parse(texto)
+        
 
         if (data.success) {
             exito.value = 'Perfil actualizado correctamente'

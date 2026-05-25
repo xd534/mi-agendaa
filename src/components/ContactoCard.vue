@@ -1,24 +1,46 @@
 <script setup>
-import { getApiUrl } from '@/config/api'// carga la función para obtener la URL de la API
-import { ref, onMounted } from 'vue'
+import { getApiUrl } from '@/config/api'
+import { ref, onMounted, computed } from 'vue' // <-- 1. Importamos computed aquí
 import '@/assets/contacto-card.css'
-const props = defineProps({ contacto: Object })
-defineEmits(['eliminar']) //declara el evento personalizado 'eliminar' que se emitirá al hacer clic en el botón de eliminar
 
-const baseUrl = ref('') // almacena la URL base de la API
+const props = defineProps({ contacto: Object })
+defineEmits(['eliminar'])
+
+const baseUrl = ref('') 
+
 onMounted(async () => {
     const url = await getApiUrl()
     baseUrl.value = url
-    console.log('Base URL:', baseUrl.value)
-    console.log('foto contacto:',props.contacto.foto)
-    console.log('URL final:', `${baseUrl.value}/${props.contacto.foto}`)
+})
+
+// 2. Creamos la propiedad computada inteligente fuera de onMounted
+const urlImagen = computed(() => {
+    // Si no hay foto, silueta por defecto
+    if (!props.contacto.foto) {
+        return 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+    }
+
+    // Si ya viene con http o https, la dejamos igual
+    if (props.contacto.foto.startsWith('http://') || props.contacto.foto.startsWith('https://')) {
+        return props.contacto.foto
+    }
+
+    // Si solo viene "default.png" o similar, construimos la ruta bien armada
+    const servidorBase = baseUrl.value.replace('/api', '').replace(/\/+$/, '') 
+    let rutaFoto = props.contacto.foto.replace(/^\/+/, '')
+    
+    if (!rutaFoto.includes('uploads/')) {
+        rutaFoto = `uploads/contactos/${rutaFoto}`
+    }
+
+    return `${servidorBase}/${rutaFoto}` 
 })
 </script>
 
 <template>
     <div class="card">
         <img 
-            :src="contacto.foto || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'" 
+            :src="urlImagen" 
             @error="e => e.target.src = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'" 
             alt="Foto de contacto"
         />
